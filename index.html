@@ -120,8 +120,7 @@
         .hero-section {
             margin-top: 48px;
             position: relative;
-            height: calc(100vh - 48px);
-            min-height: 600px;
+            height: 500px;
             background: var(--bg-primary);
         }
 
@@ -432,10 +431,6 @@
         <div class="hero-subtitle">Top 10 Oil & Gas Companies by Market Cap</div>
     </div>
     <div id="map"></div>
-    <div class="scroll-hint">
-        Scroll to explore
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
-    </div>
 </section>
 
 <!-- ââââââââââ CRUDE OIL PRICES ââââââââââ -->
@@ -586,7 +581,8 @@ const map = L.map('map', {
     minZoom: 2,
     maxZoom: 8,
     zoomControl: false,
-    attributionControl: false
+    attributionControl: false,
+    scrollWheelZoom: false
 });
 
 // Dark tile layer (CartoDB dark matter â TradingView-like)
