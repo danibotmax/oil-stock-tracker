@@ -540,7 +540,7 @@
 <section id="oil-prices">
     <div class="section">
         <div class="section-header">
-            <div class="section-title">Crude Oil â WTI (CL=F)</div>
+            <div class="section-title">Crude Oil &#8212; WTI (CL=F)</div>
             <div class="section-badge">Daily Chart</div>
         </div>
 
@@ -994,9 +994,24 @@ async function loadData() {
    âââââââââââââââââââââââââââââââââââââââ */
 async function loadNews() {
     const container = document.getElementById('news-container');
+    const apiKey = 'c45201a6ad61d0b4a08b9fe1ca833050';
+    const gnewsUrl = 'https://gnews.io/api/v4/search?q=crude+oil&lang=en&max=5&sortby=publishedAt&apikey=' + apiKey;
+
+    async function tryFetch(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+    }
+
     try {
-        const res = await fetch('https://gnews.io/api/v4/search?q=crude+oil&lang=en&max=5&sortby=publishedAt&apikey=c45201a6ad61d0b4a08b9fe1ca833050');
-        const data = await res.json();
+        let data;
+        try {
+            data = await tryFetch(gnewsUrl);
+        } catch (e1) {
+            // Try CORS proxy fallback
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(gnewsUrl);
+            data = await tryFetch(proxyUrl);
+        }
 
         if (!data.articles || data.articles.length === 0) {
             container.innerHTML = '<div class="news-error">No news articles found at this time. Check back later.</div>';
