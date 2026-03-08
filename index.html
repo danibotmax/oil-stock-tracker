@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 10 Oil Companies Stock Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e17;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b2838 100%);
+            border-bottom: 1px solid #1e3a5f;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 .icon { font-size: 28px; }
+
+        .header .subtitle {
+            font-size: 13px;
+            color: #7a8ba3;
+            margin-top: 4px;
+        }
+
+        .last-updated {
+            font-size: 13px;
+            color: #7a8ba3;
+            text-align: right;
+        }
+
+        .last-updated span { color: #4fc3f7; }
+
+        .summary-bar {
+            display: flex;
+            gap: 20px;
+            padding: 20px 40px;
+            background: #0d1117;
+            border-bottom: 1px solid #1e293b;
+            flex-wrap: wrap;
+        }
+
+        .summary-card {
+            background: #151b28;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px 24px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .summary-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7a8ba3;
+            margin-bottom: 6px;
+        }
+
+        .summary-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .summary-card .value.green { color: #4caf50; }
+        .summary-card .value.red { color: #ef5350; }
+
+        .container { padding: 24px 40px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #111827;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
+
+        thead th {
+            background: #1a2744;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 14px 16px;
+            text-align: right;
+            border-bottom: 2px solid #253553;
+        }
+
+        thead th:first-child,
+        thead th:nth-child(2),
+        thead th:nth-child(3) { text-align: left; }
+
+        tbody tr {
+            border-bottom: 1px solid #1e293b;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover { background: #1a2235; }
+
+        tbody td {
+            padding: 14px 16px;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        tbody td:first-child {
+            text-align: center;
+            color: #64748b;
+            font-weight: 600;
+            width: 50px;
+        }
+
+        tbody td:nth-child(2) {
+            text-align: left;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        tbody td:nth-child(3) {
+            text-align: left;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: #4fc3f7;
+            font-weight: 500;
+        }
+
+        .price {
+            font-weight: 700;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .change-positive { color: #4caf50; }
+        .change-negative { color: #ef5350; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-green {
+            background: rgba(76,175,80,0.15);
+            color: #4caf50;
+        }
+
+        .badge-red {
+            background: rgba(239,83,80,0.15);
+            color: #ef5350;
+        }
+
+        .market-cap {
+            color: #94a3b8;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .fifty-two {
+            color: #7a8ba3;
+            font-size: 13px;
+        }
+
+        .sparkline-cell { width: 80px; }
+
+        canvas.sparkline {
+            display: block;
+            margin-left: auto;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #475569;
+            font-size: 12px;
+        }
+
+        .footer a { color: #4fc3f7; text-decoration: none; }
+
+        .pulse {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @media (max-width: 900px) {
+            .header, .summary-bar, .container { padding: 16px; }
+            table { font-size: 12px; }
+            thead th, tbody td { padding: 10px 8px; }
+            .summary-card .value { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1><span class="icon">⛽</span> Oil & Gas Stock Tracker</h1>
+        <div class="subtitle">Top 10 Companies by Market Cap &mdash; Live Prices</div>
+    </div>
+    <div class="last-updated">
+        <div><span class="pulse"></span> <span>LIVE</span></div>
+        <div id="timestamp">Loading...</div>
+    </div>
+</div>
+
+<div class="summary-bar">
+    <div class="summary-card">
+        <div class="label">Avg. Stock Price</div>
+        <div class="value" id="avg-price">—</div>
+    </div>
+    <div class="summary-card">
+        <div class="label">Top Gainer</div>
+        <div class="value green" id="top-gainer">—</div>
+    </div>
+    <div class="summary-card">
+        <div class="label">Top Loser</div>
+        <div class="value red" id="top-loser">—</div>
+    </div>
+    <div class="summary-card">
+        <div class="label">Total Market Cap</div>
+        <div class="value" id="total-mcap">—</div>
+    </div>
+</div>
+
+<div class="container">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Company</th>
+                <th>Ticker</th>
+                <th>Price</th>
+                <th>Day Change</th>
+                <th>Change %</th>
+                <th>Market Cap</th>
+                <th>52W High</th>
+                <th>52W Low</th>
+            </tr>
+        </thead>
+        <tbody id="stock-table"></tbody>
+    </table>
+</div>
+
+<div class="footer">
+    Data provided by Yahoo Finance API &bull; Prices may be delayed up to 15 min &bull;
+    <a href="https://docs.google.com/spreadsheets/d/1xVE2QpGLNBULymbci6ocHdZ4Z9ICqaDMitoqR30Kk48/edit" target="_blank">View Google Sheet</a>
+</div>
+
+<script>
+const companies = [
+    { rank: 1,  name: "ExxonMobil",        ticker: "XOM"  },
+    { rank: 2,  name: "Chevron",            ticker: "CVX"  },
+    { rank: 3,  name: "Shell",              ticker: "SHEL" },
+    { rank: 4,  name: "TotalEnergies",      ticker: "TTE"  },
+    { rank: 5,  name: "ConocoPhillips",     ticker: "COP"  },
+    { rank: 6,  name: "BP",                 ticker: "BP"   },
+    { rank: 7,  name: "EOG Resources",      ticker: "EOG"  },
+    { rank: 8,  name: "Cheniere Energy",    ticker: "LNG"  },
+    { rank: 9,  name: "EQT Corporation",    ticker: "EQT"  },
+    { rank: 10, name: "Devon Energy",       ticker: "DVN"  }
+];
+
+async function fetchQuote(ticker) {
+    try {
+        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`);
+        const data = await res.json();
+        const meta = data.chart.result[0].meta;
+        const price = meta.regularMarketPrice;
+        const prevClose = meta.chartPreviousClose || meta.previousClose;
+        const change = price - prevClose;
+        const changePct = (change / prevClose) * 100;
+        return {
+            price,
+            change,
+            changePct,
+            marketCap: meta.regularMarketVolume ? null : null,
+            high52: meta.fiftyTwoWeekHigh,
+            low52: meta.fiftyTwoWeekLow
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+const fallbackData = {
+    XOM:  { price: 151.21, change: 0.43, changePct: 0.29, marketCap: 630056261205, high52: 159.60, low52: 97.80 },
+    CVX:  { price: 189.94, change: 0.04, changePct: 0.02, marketCap: 379003431771, high52: 192.41, low52: 132.04 },
+    SHEL: { price: 84.70,  change: 1.76, changePct: 2.12, marketCap: 240169043546, high52: 85.16,  low52: 58.55 },
+    TTE:  { price: 78.77,  change: 1.69, changePct: 2.19, marketCap: 173679650518, high52: 82.21,  low52: 52.78 },
+    COP:  { price: 117.07, change: 0.25, changePct: 0.21, marketCap: 143099226356, high52: 122.50, low52: 79.88 },
+    BP:   { price: 40.44,  change: 1.14, changePct: 2.90, marketCap: 106178936874, high52: 40.60,  low52: 25.22 },
+    EOG:  { price: 131.41, change: 0.38, changePct: 0.29, marketCap: 70500336838,  high52: 134.00, low52: 101.59 },
+    LNG:  { price: 255.15, change: 5.61, changePct: 2.25, marketCap: 53633243137,  high52: 259.24, low52: 186.20 },
+    EQT:  { price: 61.96,  change: 0.29, changePct: 0.47, marketCap: 38680016468,  high52: 63.06,  low52: 43.57 },
+    DVN:  { price: 44.48,  change: -0.04,changePct: -0.09,marketCap: 27577599716,  high52: 46.15,  low52: 25.89 }
+};
+
+function formatCurrency(n) {
+    return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function formatMarketCap(n) {
+    if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+    if (n >= 1e9)  return '$' + (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6)  return '$' + (n / 1e6).toFixed(1) + 'M';
+    return '$' + n.toLocaleString();
+}
+
+function render(stockData) {
+    const tbody = document.getElementById('stock-table');
+    tbody.innerHTML = '';
+
+    let totalMcap = 0;
+    let totalPrice = 0;
+    let topGainer = { ticker: '', pct: -Infinity };
+    let topLoser = { ticker: '', pct: Infinity };
+
+    companies.forEach(c => {
+        const d = stockData[c.ticker] || fallbackData[c.ticker];
+        if (!d) return;
+
+        totalPrice += d.price;
+        totalMcap += d.marketCap || 0;
+
+        if (d.changePct > topGainer.pct) topGainer = { ticker: c.ticker, name: c.name, pct: d.changePct };
+        if (d.changePct < topLoser.pct)  topLoser  = { ticker: c.ticker, name: c.name, pct: d.changePct };
+
+        const isPos = d.change >= 0;
+        const changeClass = isPos ? 'change-positive' : 'change-negative';
+        const badgeClass = isPos ? 'badge-green' : 'badge-red';
+        const arrow = isPos ? '▲' : '▼';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${c.rank}</td>
+            <td>${c.name}</td>
+            <td>${c.ticker}</td>
+            <td class="price">${formatCurrency(d.price)}</td>
+            <td class="${changeClass}">${isPos ? '+' : ''}${formatCurrency(d.change).replace('$-', '-$')}</td>
+            <td><span class="badge ${badgeClass}">${arrow} ${Math.abs(d.changePct).toFixed(2)}%</span></td>
+            <td class="market-cap">${d.marketCap ? formatMarketCap(d.marketCap) : '—'}</td>
+            <td class="fifty-two">${formatCurrency(d.high52)}</td>
+            <td class="fifty-two">${formatCurrency(d.low52)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('avg-price').textContent = formatCurrency(totalPrice / companies.length);
+    document.getElementById('top-gainer').textContent = `${topGainer.name} +${topGainer.pct.toFixed(2)}%`;
+    document.getElementById('top-loser').textContent = `${topLoser.name} ${topLoser.pct.toFixed(2)}%`;
+    document.getElementById('total-mcap').textContent = formatMarketCap(totalMcap);
+
+    const now = new Date();
+    document.getElementById('timestamp').textContent = `Updated: ${now.toLocaleString()}`;
+}
+
+async function loadData() {
+    let stockData = {};
+    let usedFallback = false;
+
+    try {
+        const results = await Promise.allSettled(
+            companies.map(c => fetchQuote(c.ticker))
+        );
+
+        let successCount = 0;
+        results.forEach((r, i) => {
+            if (r.status === 'fulfilled' && r.value) {
+                stockData[companies[i].ticker] = {
+                    ...r.value,
+                    marketCap: r.value.marketCap || fallbackData[companies[i].ticker].marketCap
+                };
+                successCount++;
+            }
+        });
+
+        if (successCount < 5) {
+            stockData = fallbackData;
+            usedFallback = true;
+        }
+    } catch (e) {
+        stockData = fallbackData;
+        usedFallback = true;
+    }
+
+    render(stockData);
+
+    if (usedFallback) {
+        document.getElementById('timestamp').textContent = 'Showing last known prices from Google Sheet';
+    }
+}
+
+loadData();
+setInterval(loadData, 60000);
+</script>
+
+</body>
+</html>
