@@ -372,6 +372,107 @@
         .footer a { color: var(--accent-blue); text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
 
+        /* ââ Welcome Text ââ */
+        .welcome-text {
+            font-size: 38px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 24px rgba(0,0,0,0.7);
+            letter-spacing: -0.5px;
+        }
+
+        /* ââ News Section ââ */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        .news-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .news-card a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .news-card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+
+        .news-card-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-card-source {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .news-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .news-card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .news-card-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+
+        .news-loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .news-error {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
         /* ââ Scroll Indicator ââ */
         .scroll-hint {
             position: absolute;
@@ -417,6 +518,7 @@
         <a class="nav-link active" href="#map-section" onclick="setActiveNav(this)">Global HQ Map</a>
         <a class="nav-link" href="#oil-prices" onclick="setActiveNav(this)">Crude Oil Prices</a>
         <a class="nav-link" href="#companies" onclick="setActiveNav(this)">Companies</a>
+        <a class="nav-link" href="#news" onclick="setActiveNav(this)">News</a>
     </div>
     <div class="nav-right">
         <div class="nav-live"><span class="live-dot"></span> Market Live</div>
@@ -427,6 +529,7 @@
 <!-- ââââââââââ HERO: WORLD MAP ââââââââââ -->
 <section class="hero-section" id="map-section">
     <div class="hero-overlay">
+        <div class="welcome-text">Welcome To the Oil & Gas Tracker</div>
         <div class="hero-title">Global Headquarters</div>
         <div class="hero-subtitle">Top 10 Oil & Gas Companies by Market Cap</div>
     </div>
@@ -510,6 +613,19 @@
     </div>
 </section>
 
+<!-- ââââââââââ NEWS ââââââââââ -->
+<section id="news">
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Crude Oil News</div>
+            <div class="section-badge">Latest Headlines</div>
+        </div>
+        <div id="news-container">
+            <div class="news-loading">Loading latest crude oil news...</div>
+        </div>
+    </div>
+</section>
+
 <!-- ââââââââââ FOOTER ââââââââââ -->
 <div class="footer">
     Data via Yahoo Finance API &bull; Prices may be delayed up to 15 min &bull;
@@ -555,7 +671,7 @@ function setActiveNav(el) {
 }
 
 // Update nav highlight on scroll
-const sections = ['map-section','oil-prices','companies'];
+const sections = ['map-section','oil-prices','companies','news'];
 window.addEventListener('scroll', () => {
     const y = window.scrollY + 100;
     for (let i = sections.length - 1; i >= 0; i--) {
@@ -874,11 +990,60 @@ async function loadData() {
 }
 
 /* âââââââââââââââââââââââââââââââââââââââ
+   NEWS (GNews API)
+   âââââââââââââââââââââââââââââââââââââââ */
+async function loadNews() {
+    const container = document.getElementById('news-container');
+    try {
+        const res = await fetch('https://gnews.io/api/v4/search?q=crude+oil&lang=en&max=5&sortby=publishedAt&apikey=c45201a6ad61d0b4a08b9fe1ca833050');
+        const data = await res.json();
+
+        if (!data.articles || data.articles.length === 0) {
+            container.innerHTML = '<div class="news-error">No news articles found at this time. Check back later.</div>';
+            return;
+        }
+
+        let html = '<div class="news-grid">';
+        data.articles.forEach(article => {
+            const date = new Date(article.publishedAt).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            const imgHtml = article.image
+                ? `<img class="news-card-img" src="${article.image}" alt="" onerror="this.style.display='none'">`
+                : '';
+            const desc = article.description
+                ? (article.description.length > 150 ? article.description.substring(0, 150) + '...' : article.description)
+                : '';
+
+            html += `
+                <div class="news-card">
+                    <a href="${article.url}" target="_blank" rel="noopener noreferrer">
+                        ${imgHtml}
+                        <div class="news-card-body">
+                            <div class="news-card-source">${article.source.name}</div>
+                            <div class="news-card-title">${article.title}</div>
+                            <div class="news-card-desc">${desc}</div>
+                            <div class="news-card-date">${date}</div>
+                        </div>
+                    </a>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="news-error">Unable to load news at this time. Please try again later.</div>';
+    }
+}
+
+/* âââââââââââââââââââââââââââââââââââââââ
    INIT
    âââââââââââââââââââââââââââââââââââââââ */
 initOilChart();
 loadData();
+loadNews();
 setInterval(loadData, 60000);
+setInterval(loadNews, 300000); // refresh news every 5 min
 </script>
 
 </body>
